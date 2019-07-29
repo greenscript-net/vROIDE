@@ -368,8 +368,6 @@ function Compare-VroActionContents {
             return $true
         }
     }
-
-    write-host -ForegroundColor Red $tmpWorkingFolder.fullName
     return $false
 }
 
@@ -425,7 +423,7 @@ function Export-VroIde {
 
     # Import XML convert to jsdoc convert save
     foreach ($vroActionHeader in $vroActionHeaders){
-        Write-Host -ForegroundColor Green "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
+        Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
         $vroActionXml = [xml](get-content "$workingFolder/$($vroActionHeader.FQN)/action-content")
         $vroAction = ConvertFrom-VroActionXml -InputObject $vroActionXml
         $vroActionJs = ConvertTo-VroActionJs -InputObject $vroAction
@@ -468,7 +466,7 @@ function Import-VroIde {
     # Creating Folders
 
     foreach ($vroActionHeader in $vroActionHeaders){
-        Write-Debug "Downloading Action : $($vroActionHeader.FQN)"
+        Write-Debug "Creating Action Folder: $($vroActionHeader.FQN)"
         if (!(test-path "$workingFolder/$($vroActionHeader.FQN)/")){$null = New-Item -ItemType Directory -Path "$workingFolder/$($vroActionHeader.FQN)/" -Force}
         if (!(test-path "$vroIdeFolder/$($vroActionHeader.FQN)/")){$null = New-Item -ItemType Directory -Path "$vroIdeFolder/$($vroActionHeader.FQN)/" -Force}
     }
@@ -485,7 +483,7 @@ function Import-VroIde {
         Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
         $vroActionJs = Get-Content "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).js"
         $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs -Id $vroActionHeader.Id
-        $vroActionXml = ConvertTo-VroActionXml -inputObject $vroAction
+        $vroActionXml = ConvertTo-VroActionXml -InputObject $vroAction
         $vroActionXml.Save("$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).xml")
         Export-VroActionFile -InputObject $vroActionXml -exportFolder "$vroIdeFolder/$($vroActionHeader.FQN)/"
     }
