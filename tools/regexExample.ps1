@@ -1,6 +1,15 @@
 $fileName = '/Users/garryhughes/GIT/my-actions/src/pso.test.gh/exportedImported/exportedImported.js'
-$fileContent = Get-Content -Raw $fileName
-$fileContent | Select-String '(?smi)\/\*\*\n(\*\ .*\n)+' -AllMatches | %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+$fileContent = Get-Content $fileName -Raw
+$fileContent | Select-String '(?smi)\/\*\*(\*((?!\/)))*\*\/' -AllMatches | %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+#$fileContent | Select-String '(?smi)\/\*\*\s*\n([^*]*(\*[^/])?)*\*\/' -AllMatches | %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+#$fileContent | Select-String '\/\*\*\s*\n([^*]*(\*[^/])?)*\*\/' -AllMatches | %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+$fileContent | Select-String '(?smi)\/\*\*\s*\n((\*(?!\/)))*\*\/' -AllMatches #| %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+$fileContent | Select-String '(?smi)\/\*\*\n(\* .*\n)+(\*\/)' -AllMatches | %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+
+$fileContent -replace '(?smi)\/\*\*\n(\* .*\n)+(\*\/)',''
+
+$fileContent | Select-String '(?smi)\/\*\*\n(\* [.*\n])+#' -AllMatches #| %{ $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
+
 
 $fileContent |
     Select-String '(?smi)ap71xx[^!]+!' -AllMatches |
