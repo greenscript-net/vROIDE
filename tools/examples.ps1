@@ -1,7 +1,4 @@
-if (Get-Module VroIde){
-    Remove-Module VroIde
-}
-Import-Module ./Modules/VroDevTools/VroIde.psm1
+Import-Module ./src/vroide.psm1 -Force
 
 # Testing Phase
 
@@ -21,4 +18,6 @@ $vroIdeFolder = Export-VroIde -Debug
 
 code $vroIdeFolder
 
-Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
+# Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
+
+# Remove-Item $vroIdeFolder -Recurse -Force -Confirm:$false

@@ -332,9 +332,9 @@ function Compare-VroActionContents {
     
     # finalise
     
-    Write-Debug $tmpWorkingFolder.fullName
-    Write-Debug $originalFileHash.Hash
-    Write-Debug $updatedFileHash.Hash
+    #Write-Debug $tmpWorkingFolder.fullName
+    #Write-Debug $originalFileHash.Hash
+    #Write-Debug $updatedFileHash.Hash
 
     if ($originalFileHash.Hash -eq $updatedFileHash.Hash){
         $tmpWorkingFolder | Remove-Item -Recurse -Force -Confirm:$false
@@ -347,8 +347,6 @@ function Compare-VroActionContents {
     $vcfLineEndOriginal = (Get-Content "$original/action-content")[1].Split(" ")[-1].split("=")[0]
 
     if ( ($diff.count -eq 2) -and ( $vcfLineEndOriginal -eq "allowed-operations" ) ){
-        Write-Debug "Conditions Suitable for allowed-operations ignore"
-
         $originalFile = Get-Content $original/action-content
         $updatedFile = Get-Content $updated/action-content
 
@@ -465,7 +463,7 @@ function Import-VroIde {
 
     $vroActionHeaders | Select-Object -First 5
 
-    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name NewGuid
+    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name ([guid]::NewGuid().Guid).ToUpper()
 
     # Creating Folders
 
@@ -479,13 +477,13 @@ function Import-VroIde {
 
     foreach ($vroActionHeader in $vroActionHeaders){
         Write-Debug "Downloading Action : $($vroActionHeader.FQN)"
-        $null = Export-vROAction -Id $vroActionHeader.Id -Path "$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action"
+        $null = Export-vROAction -Id $vroActionHeader.Id -Path "$workingFolder/$($vroActionHeader.FQN)/"
     }
 
     # Import jsodc convert to xml convert save and export to action
     foreach ($vroActionHeader in $vroActionHeaders){
         Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
-        $vroActionJs = Get-Content "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Id).js"
+        $vroActionJs = Get-Content "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).js"
         $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs -Id $vroActionHeader.Id
         $vroActionXml = ConvertTo-VroActionXml -inputObject $vroAction
         $vroActionXml.Save("$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).xml")
