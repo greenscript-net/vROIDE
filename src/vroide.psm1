@@ -496,8 +496,9 @@ function Import-VroIde {
             Write-Debug "Comparing $($vroActionHeader.Name) : would not be updated - file hash identical"
         }else{
             Write-Debug "Comparing $($vroActionHeader.Name) : would be updated - file hash not identical"
-            Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -Overwrite -WhatIf
+            Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -Overwrite #-WhatIf
         }
+        Remove-Item -Path "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -Confirm:$false
     }
 
     if ($cleanWorkingFolder){
