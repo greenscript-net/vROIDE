@@ -4,7 +4,7 @@ PowerShell Module housing a set of functions designed to assist with the creatio
 
 There are 2 master functions that import and export Actions for editing locally.
 
-## vExport-VroIde
+## Export-VroIde
 
 - Downloads and saves all actions to local system in a folder structure aligning with vro modules
 - Extracts the XML content from each of the actions
