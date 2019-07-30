@@ -14,7 +14,7 @@ if (!$vROConnection){
     }
 }
 
-$vroIdeFolder = Export-VroIde -Debug -vroIdeFolder /Users/garryhughes/GIT/my-actions/src/
+$vroIdeFolder = Export-VroIde -Debug #-vroIdeFolder /Users/garryhughes/GIT/my-actions/src/
 
 code $vroIdeFolder
 
