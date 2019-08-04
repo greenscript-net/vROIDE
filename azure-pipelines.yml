@@ -10,7 +10,7 @@ jobs:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: 'NUnit'
-      testResultsFiles: '**/TEST-*.xml'
+      testResultsFiles: 'TEST-Pester.XML'
       failTaskOnFailedTests: true
 - job: macOS
   pool:
