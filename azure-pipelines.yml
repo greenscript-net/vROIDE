@@ -10,7 +10,7 @@ jobs:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: 'NUnit'
-      testResultsFiles: 'TEST-*.xml'
+      testResultsFiles: '**/TEST-*.xml'
       failTaskOnFailedTests: true
 - job: macOS
   pool:
@@ -23,7 +23,7 @@ jobs:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: 'NUnit'
-      testResultsFiles: '**\\TEST-*.xml'
+      testResultsFiles: '**/TEST-*.xml'
       failTaskOnFailedTests: true
 - job: Windows
   pool:
