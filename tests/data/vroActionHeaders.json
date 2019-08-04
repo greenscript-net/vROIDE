@@ -1,0 +1,43 @@
+{
+  "Id": "af224e48-8421-4f8b-b5ed-8f0de4d8c38c",
+  "Name": "standardAction",
+  "Description": "",
+  "FQN": "pso.test.gh/standardAction",
+  "Version": "0.0.0",
+  "InputParameters": [
+    {
+      "description": "first number",
+      "type": "number",
+      "name": "number1"
+    },
+    {
+      "description": "second number",
+      "type": "number",
+      "name": "number2"
+    },
+    {
+      "description": "colour",
+      "type": "string",
+      "name": "colour"
+    },
+    {
+      "description": "will the fruit be eaten",
+      "type": "boolean",
+      "name": "eaten"
+    },
+    {
+      "description": "list of fruits",
+      "type": "Array/string",
+      "name": "fruits"
+    }
+  ],
+  "OutputType": "Array/string",
+  "Href": "https://vra.greenscript.net:443/vco/api/actions/af224e48-8421-4f8b-b5ed-8f0de4d8c38c/",
+  "Relations": {
+    "link": [
+      "@{href=https://vra.greenscript.net:443/vco/api/actions/pso.test.gh/standardAction/; rel=alternate}",
+      "@{href=https://vra.greenscript.net:443/vco/api/actions/af224e48-8421-4f8b-b5ed-8f0de4d8c38c/permissions/; rel=permissions}",
+      "@{href=https://vra.greenscript.net:443/vco/api/actions/af224e48-8421-4f8b-b5ed-8f0de4d8c38c/executions/; rel=executions}"
+    ]
+  }
+}
