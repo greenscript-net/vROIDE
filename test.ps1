@@ -16,6 +16,6 @@ $modules = Get-Module -list
 if ($modules.Name -notcontains 'pester') {
     Install-Module -Name Pester -Force -SkipPublisherCheck
 }
-Invoke-Pester -Script "./tests/" -OutputFile "./Test-Pester.XML" -OutputFormat 'NUnitXML'
+Invoke-Pester -Script "./tests/" -OutputFile "./TEST-Pester.XML" -OutputFormat 'NUnitXML'
 
 Get-Content "./Test-Pester.XML"
