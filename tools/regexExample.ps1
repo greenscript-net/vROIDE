@@ -12,11 +12,11 @@ $patternReturn =  "\* @(?<jsdoctype>return) (?<type>{[^}]*})"
 $patternOther = "\* @(?<jsdoctype>\w+) (?<description>[^{]*)"
 
 $fileContent = Get-Content $fileName -Raw
-$jsdocBody = ($fileContent | Select-String -Pattern $patternBody |  % { $_.Matches.value }).split([System.Environment]::NewLine) 
-$jsdocBody = ($jsdocBody | Select-Object -Skip 1 | % { $_ -replace "^\t","" }) -join [System.Environment]::NewLine
-$jsdocHeader = $fileContent | Select-String $patternHeader -AllMatches | % { $_.Matches } | %{ $_.Groups[1] } | %{ $_.Value }
-$jsDocDescription = $fileContent | Select-String -Pattern $patternDescription -AllMatches | %{ $_.Matches } | %{ $_.Groups[2] } | %{ $_.Value }
-$jsDocDescription = $jsDocDescription.split([System.Environment]::NewLine) | % { $_ -replace "^\* ","" }
+$jsdocBody = ($fileContent | Select-String -Pattern $patternBody | ForEach-Object { $_.Matches.value }).split([System.Environment]::NewLine) 
+$jsdocBody = ($jsdocBody | Select-Object -Skip 1 | ForEach-Object { $_ -replace "^\t","" }) -join [System.Environment]::NewLine
+$jsdocHeader = $fileContent | Select-String $patternHeader -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1] } | ForEach-Object { $_.Value }
+$jsDocDescription = $fileContent | Select-String -Pattern $patternDescription -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[2] } | ForEach-Object { $_.Value }
+$jsDocDescription = $jsDocDescription.split([System.Environment]::NewLine) | ForEach-Object { $_ -replace "^\* ","" }
 
 # jsdoc comments
 

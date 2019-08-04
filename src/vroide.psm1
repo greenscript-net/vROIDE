@@ -15,6 +15,10 @@ Class VroAction {
     [string] $Href
     [System.Object[]] $Relations
     [string] $Script
+    [string] $Module
+    [string] $TagsGlobal
+    [string] $TagsUser
+    [string] $AllowedOperations
 }
 
 function NewGuid {
@@ -49,7 +53,12 @@ function ConvertFrom-VroActionXml {
     $vroAction.Description = $xml.'dunes-script-module'.description.'#cdata-section'
     $vroAction.OutputType = $xml.'dunes-script-module'.'result-type'
     $vroAction.Script = $xml.'dunes-script-module'.script.'#cdata-section'
-    $vroAction.Id = $xml.'dunes-script-module'.'id'
+
+    if ($xml.'dunes-script-module'.'id' -as [guid]){
+        $vroAction.Id = $xml.'dunes-script-module'.'id'
+    }else{
+        $vroAction.Id = $xml.'dunes-script-module'.'id'.substring(0,4) + $xml.'dunes-script-module'.'id'.substring(32,4) + $xml.'dunes-script-module'.'id'.substring(41,24)
+    }
 
     if ($xml.'dunes-script-module'.param) {
         $inputs = @()
@@ -123,13 +132,8 @@ function ConvertFrom-VroActionJs {
             ValueFromPipelineByPropertyName = $true
         )]
         [ValidateNotNull()]
-        [string[]]$InputObject,
-        [Parameter(
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [guid]$Id
+        [string[]]$InputObject
     )
-    $InputObject = $InputObject.split([System.Environment]::NewLine)
 
     # above validations including from pipeline
     # check there is header start header end function and final line
@@ -137,48 +141,70 @@ function ConvertFrom-VroActionJs {
     # Init
 
     $vroAction = [VroAction]::new();
+
+    # Regex Extractor
+
+    $patternHeader = '(?smi)\/\*\*\n(\* .*\n)+(\*\/)'
+    $patternDescription = "(\/\*\*\n)(\* [^@]*\n)*"
+    $patternBody = "(?smi)^function .*\n(.*\n)*"
+    $patternInputs =  "\* @(?<jsdoctype>param) (?<type>[^}]*}) (?<name>\w+) - (?<description>[^\n]*)"
+    $patternReturn =  "\* @(?<jsdoctype>return) (?<type>{[^}]*})"
+    $patternOther = "\* @(?<jsdoctype>\w+) (?<description>[^{]*)"
+
+    $jsdocBody = ($InputObject | Select-String -Pattern $patternBody | ForEach-Object { $_.Matches.value }).split([System.Environment]::NewLine)
+    $vroAction.Name = $jsdocBody[0].split(" ")[1].split("(")[0]
+    $vroAction.Script = ($jsdocBody | Select-Object -Skip 1 | ForEach-Object { $_ -replace "^\t","" }) -join [System.Environment]::NewLine
+    $jsdocHeader = $InputObject | Select-String $patternHeader -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1] } | ForEach-Object { $_.Value }
+    $jsDocDescription = $InputObject | Select-String -Pattern $patternDescription -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[2] } | ForEach-Object { $_.Value }
+    $vroAction.Description = ($jsDocDescription.split([System.Environment]::NewLine) | ForEach-Object { $_ -replace "^\* ","" }) -join [System.Environment]::NewLine
+
+    # jsdoc comments
+
+    $jsdocComments = @()
+    $jsdocHeader.Split([System.Environment]::NewLine) | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
+        Foreach-Object {
+            $jsdocComments += [PSCustomObject] @{
+                jsdoctype = $_.Matches[0].Groups['jsdoctype'].Value
+                type = $_.Matches[0].Groups['type'].Value
+                name = $_.Matches[0].Groups['name'].Value
+                description = $_.Matches[0].Groups['description'].Value
+            }
+        }
+
+    # Populate vroaction
+
+    $id = $jsdocComments | Where-Object { $_.jsdoctype -eq "id" }
     
-    if ($Id){
-        $vroAction.Id = $Id
+    if ($id){
+        $vroAction.Id = $id
     }else{
-        $vroAction.Id = NewGuid
+        $vroAction.Id = "{$([guid]::NewGuid().Guid)}".ToUpper()
     }
 
-    # extract header
-
-    $headerStart = ($InputObject | Select-String -Pattern "^\/\*\*$")[0].LineNumber
-    $headerEnd = ($InputObject | Select-String -Pattern "^\*\/$")[0].LineNumber
-    $header = $InputObject | Select-Object -Skip ($headerStart) | Select-Object -First ($headerEnd - $headerStart - 1)
-
-    # name
-    $vroAction.Name = ($InputObject | Select-String -Pattern "^Function")[0].Line.split("(")[0].split(" ")[-1]       
-
     # inputs
-    $inputStrings = $header | Where-Object { $_ -match "^\* \@param" }
-    $inputs = @()
 
-    foreach ($input in $inputStrings) {
+    foreach ($input in ($jsdocComments | Where-Object { $_.jsdoctype -eq "param" })) {
         $obj = [VroActionInput]::new()
-        $obj.name = $input.Split("} ")[1].Split(" - ")[0]
-        $obj.description = ($input.Split(" - ")  | Select-Object -Skip 1 ) -join " - "                   
-        $obj.type = $input.split("{")[1].split("}")[0]
+        $obj.name = $input.name
+        $obj.description = $input.description                  
+        $obj.type = $input.type
         $inputs += $obj
     }
     $vroAction.InputParameters = $inputs
-    $header = $header | Where-Object { $_ -notmatch "^\* \@param" }
 
     # return type
-    $vroAction.OutputType = ($header | Where-Object { $_ -match "^\* \@return" }).split("{")[1].replace("}", "")
-    $header = $header | Where-Object { $_ -notmatch "^\* \@return" }
+    $vroAction.OutputType = ($jsdocComments | Where-Object { $_.jsdoctype -eq "param" }).replace("}", "").replace("{", "")
 
-    # description
-    $vroAction.Description = ($header | ForEach-Object { $_ -replace ("\* ", "") }) -join [System.Environment]::NewLine
+    # other jsdoc comments
 
-    # extract and parse script
-    $script = $InputObject | Select-Object -Skip ($headerEnd + 1 ) | Select-Object -first ($InputObject.Length - $headerEnd - 2)
-    $script = $script | ForEach-Object { $_ -replace "^[`t]{1}", "" }
-    $script = $script -join [System.Environment]::NewLine
-    $vroAction.Script = $script
+    foreach ($jsdocComment in ($jsdocComments | Where-Object { $_.jsdoctype -notin "param","id","return" })) {
+        $obj = [VroActionInput]::new()
+        $obj.name = $input.name
+        $obj.description = $input.description                  
+        $obj.type = $input.type
+        $inputs += $obj
+    }
+    $vroAction.InputParameters = $inputs
 
     return $vroAction
 }
@@ -391,9 +417,9 @@ function Export-VroIde {
         $vroIdeFolder = CreateTemporaryFolder
     }
 
-    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name NewGuid
+    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name "{$([guid]::NewGuid().Guid)}".ToUpper()
 
-    $vroActionHeaders = Get-vROAction | Where-Object { $_.FQN -notlike "com.vmware*" }
+    $vroActionHeaders = Get-vROAction # | Where-Object { $_.FQN -notlike "com.vmware*" }
 
     # export vro action headers 
 
