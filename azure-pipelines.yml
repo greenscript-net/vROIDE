@@ -38,3 +38,16 @@ jobs:
       testResultsFormat: 'NUnit'
       testResultsFiles: '**/TEST-*.xml'
       failTaskOnFailedTests: true
+- job: macOS2
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
+  - task: PowerShell@2
+    inputs:
+      filePath: 'test.ps1'
+      pwsh: true
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'NUnit'
+      testResultsFiles: '**/TEST-*.XML'
+      failTaskOnFailedTests: true
