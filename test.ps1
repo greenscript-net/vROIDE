@@ -18,4 +18,4 @@ if ($modules.Name -notcontains 'pester') {
 }
 Invoke-Pester -Script "./tests/" -OutputFile "./TEST-Pester.XML" -OutputFormat 'NUnitXML'
 
-Get-Content "./Test-Pester.XML"
+Get-Content "./TEST-Pester.XML"
