@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/greenscript/vROIDE/_apis/build/status/greenscript-net.vROIDE?branchName=master)](https://dev.azure.com/greenscript/vROIDE/_build/latest?definitionId=5&branchName=master)
+
 # vROIDE
 
 PowerShell Module housing a set of functions designed to assist with the creation and update of VMware VRO Actions.
