@@ -19,6 +19,12 @@ Class VroAction {
     [string] $TagsGlobal
     [string] $TagsUser
     [string] $AllowedOperations
+    [string] modulePath ($basePath) {
+        return (Join-Path -Path $basePath -ChildPath $this.FQN.Split("/")[0])
+    }
+    [string] filePath ($basePath, [string]$fileExtension) {
+        return (Join-Path -Path $basePath -ChildPath $this.FQN.Split("/")[0] -AdditionalChildPath "$($this.Name).$fileExtension")
+    }
 }
 
 function NewGuid {
@@ -417,44 +423,53 @@ function Export-VroIde {
         $vroIdeFolder = CreateTemporaryFolder
     }
 
-    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name "{$([guid]::NewGuid().Guid)}".ToUpper()
+    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name "$([guid]::NewGuid().Guid)".ToUpper()
 
     $vroActionHeaders = Get-vROAction # | Where-Object { $_.FQN -notlike "com.vmware*" }
 
     # export vro action headers 
 
-    $vroActionHeaders | ConvertTo-Json | set-content $vroIdeFolder/vroActionHeaders.json
+    $vroActionHeaders | ConvertTo-Json | set-content (Join-Path -Path $vroIdeFolder -ChildPath "vroActionHeaders.json")
 
     # Creating Folders
 
     foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Creating Folders : $($vroActionHeader.FQN)"
-        if (!(test-path "$workingFolder/$($vroActionHeader.FQN)/")){$null = New-Item -ItemType Directory -Path "$workingFolder/$($vroActionHeader.FQN)/" -Force}
-        if (!(test-path "$vroIdeFolder/$($vroActionHeader.FQN)/")){$null = New-Item -ItemType Directory -Path "$vroIdeFolder/$($vroActionHeader.FQN)/" -Force}
+        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolder))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
+        }
+        if (!(Test-Path $vroActionHeader.modulePath($workingFolder))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($workingFolder)
+        }
     }
 
     # Downloading Actions
 
     foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Downloading Action : $($vroActionHeader.FQN)"
-        $null = Export-vROAction -Id $vroActionHeader.Id -Path "$workingFolder/$($vroActionHeader.FQN)/"
+        $null = Export-vROAction -Id $vroActionHeader.Id -Path $vroActionHeader.modulePath($workingFolder)
     }
 
     # Expanding Actions
 
     foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Expanding Action : $($vroActionHeader.FQN)"
-        Expand-Archive -Path "$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -DestinationPath "$workingFolder/$($vroActionHeader.FQN)/" -Force
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $actionContentFile = [System.IO.Compression.ZipFile]::OpenRead($vroActionHeader.filePath($workingFolder,"action")).Entries | Where-Object { $_.FullName -eq "action-content"}
+        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($actionContentFile, $vroActionHeader.filePath($workingFolder,"xml"), $true)
     }
 
     # Import XML convert to jsdoc convert save
     foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
-        $vroActionXml = [xml](get-content "$workingFolder/$($vroActionHeader.FQN)/action-content")
+        $vroActionXml = [xml](get-content $vroActionHeader.filePath($workingFolder,"xml"))
         $vroAction = ConvertFrom-VroActionXml -InputObject $vroActionXml
         $vroActionJs = ConvertTo-VroActionJs -InputObject $vroAction
-        $vroActionJs | set-content "$workingFolder/$($vroActionHeader.FQN)/$($vroAction.Id).js"
-        $vroActionJs | set-content "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroAction.Name).js"
+        $vroActionJs | set-content $vroActionHeader.filePath($vroIdeFolder,"js")
     }
 
     if (!$cleanWorkingFolder){
@@ -507,8 +522,9 @@ function Import-VroIde {
     # Import jsodc convert to xml convert save and export to action
     foreach ($vroActionHeader in $vroActionHeaders){
         Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
+        Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.Id)"
         $vroActionJs = Get-Content "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).js"
-        $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs -Id $vroActionHeader.Id
+        $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs
         $vroActionXml = ConvertTo-VroActionXml -InputObject $vroAction
         $vroActionXml.Save("$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).xml")
         Export-VroActionFile -InputObject $vroActionXml -exportFolder "$vroIdeFolder/$($vroActionHeader.FQN)/"

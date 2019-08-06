@@ -8,14 +8,15 @@ InModuleScope -ModuleName vroide -ScriptBlock {
             $vROConnection = "mocked endpoint"
             $TempDir = [System.Guid]::NewGuid().ToString()
             $vroIdeFolder = New-Item -Type Directory -Name $TempDir -path $env:TMPDIR
-            $moduleFolder = new-item -type Directory -Name "pso.test.gh" -path $vroIdeFolder
-            $vroActionHeaders = get-content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json")
-            $vroActionHeaders | ConvertTo-Json | Set-Content ($vroIdeFolder.FullName | Join-Path -ChildPath "vroActionHeaders.json") -Force
-            $vroActionFile = copy-item (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "standard.action") $moduleFolder
+            $vroActionHeaders = get-content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json
+            foreach ($vroActionHeader in $vroActionHeaders){
+                $vroActionHeader = $vroActionHeader -as [VroAction]
+                $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
+                $null = Copy-Item -Path (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath "$($vroActionHeader.Name).action") -Destination $vroActionHeader.modulePath($vroIdeFolder)
+            }
             code $vroIdeFolder
         }
-
-        Mock Get-vROAction {return $vroActionHeaders}
+        Mock Get-vROAction { return (get-content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json)}
         Mock Export-vROAction {
             param (
                 [Parameter(
@@ -28,13 +29,36 @@ InModuleScope -ModuleName vroide -ScriptBlock {
                 )]
                 [string]$path        
             )
+            $vroActionHeader = ($vroActionHeaders | Where-Object { $_.id -eq $Id }) -as [VroAction]
+            Write-Debug $vroActionHeader.filePath($vroIdeFolder,"action")
+            Write-Debug $vroActionHeader.modulePath($vroIdeFolder)
+            Copy-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Destination $path
+            $vroActionFile = Get-Item $path
             
             return $vroActionFile
         }
-        #Mock Build {} -Verifiable -ParameterFilter {$version -eq 1.2}
+        Mock Import-vROAction {
+            param (
+                [Parameter(
+                    Mandatory = $false
+                )]
+                [ValidateNotNull()]
+                [string[]]$CategoryName,
+                [Parameter(
+                    Mandatory = $false
+                )]
+                [string]$File,
+                [Parameter(
+                    Mandatory = $false
+                )]
+                [bool]$Override        
+            )
+            return $null
+        }
 
         It "Exports VRO Environment" {
-            Export-VroIde -vroIdeFolder $vroIdeFolder -Debug | Should be null
+            Export-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug
+            #Import-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug
             2 | should be 2
         }
     }
