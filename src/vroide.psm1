@@ -59,6 +59,11 @@ function ConvertFrom-VroActionXml {
     $vroAction.Description = $xml.'dunes-script-module'.description.'#cdata-section'
     $vroAction.OutputType = $xml.'dunes-script-module'.'result-type'
     $vroAction.Script = $xml.'dunes-script-module'.script.'#cdata-section'
+    $vroAction.Version = $xml.'dunes-script-module'.version
+
+    if ($xml.'dunes-script-module'.'allowed-operations'){
+        $vroAction.AllowedOperations = $xml.'dunes-script-module'.'allowed-operations'
+    }
 
     if ($xml.'dunes-script-module'.'id' -as [guid]){
         $vroAction.Id = $xml.'dunes-script-module'.'id'
@@ -425,7 +430,7 @@ function Export-VroIde {
 
     $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name "$([guid]::NewGuid().Guid)".ToUpper()
 
-    $vroActionHeaders = Get-vROAction # | Where-Object { $_.FQN -notlike "com.vmware*" }
+    $vroActionHeaders = Get-vROAction | Where-Object { $_.FQN -notlike "com.vmware*" }
 
     # export vro action headers 
 
@@ -468,6 +473,7 @@ function Export-VroIde {
         Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
         $vroActionXml = [xml](get-content $vroActionHeader.filePath($workingFolder,"xml"))
         $vroAction = ConvertFrom-VroActionXml -InputObject $vroActionXml
+        $vroAction | ConvertTo-Json -Depth 99 | Set-Content $vroActionHeader.filePath($workingFolder,"json")
         $vroActionJs = ConvertTo-VroActionJs -InputObject $vroAction
         $vroActionJs | set-content $vroActionHeader.filePath($vroIdeFolder,"js")
     }
