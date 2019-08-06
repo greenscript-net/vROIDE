@@ -12,9 +12,14 @@ InModuleScope -ModuleName vroide -ScriptBlock {
             foreach ($vroActionHeader in $vroActionHeaders){
                 $vroActionHeader = $vroActionHeader -as [VroAction]
                 $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
-                $null = Copy-Item -Path (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath "$($vroActionHeader.Name).action") -Destination $vroActionHeader.modulePath($vroIdeFolder)
             }
             code $vroIdeFolder
+        }
+        BeforeEach {
+            foreach ($vroActionHeader in $vroActionHeaders){
+                $vroActionHeader = $vroActionHeader -as [VroAction]
+                $null = Copy-Item -Path (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath "$($vroActionHeader.Name).action") -Destination $vroActionHeader.modulePath($vroIdeFolder)
+            }
         }
         Mock Get-vROAction { return (get-content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json)}
         Mock Export-vROAction {
@@ -30,9 +35,7 @@ InModuleScope -ModuleName vroide -ScriptBlock {
                 [string]$path        
             )
             $vroActionHeader = ($vroActionHeaders | Where-Object { $_.id -eq $Id }) -as [VroAction]
-            Write-Debug $vroActionHeader.filePath($vroIdeFolder,"action")
-            Write-Debug $vroActionHeader.modulePath($vroIdeFolder)
-            Copy-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Destination $path
+            Move-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Destination $path
             $vroActionFile = Get-Item $path
             
             return $vroActionFile
@@ -57,7 +60,7 @@ InModuleScope -ModuleName vroide -ScriptBlock {
         }
 
         It "Exports VRO Environment" {
-            Export-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug
+            Export-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug -keepWorkingFolde:$true
             #Import-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug
             2 | should be 2
         }

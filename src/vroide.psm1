@@ -409,7 +409,7 @@ function Export-VroIde {
             Mandatory = $false
         )]
         [string]$vroIdeFolder,
-        [switch]$cleanWorkingFolder
+        [switch]$keepWorkingFolder
     )
 
     if (!$vROConnection){
@@ -472,10 +472,10 @@ function Export-VroIde {
         $vroActionJs | set-content $vroActionHeader.filePath($vroIdeFolder,"js")
     }
 
-    if (!$cleanWorkingFolder){
-        $null = Remove-Item $workingFolder -Recurse -Force -Confirm:$false
+    if ($keepWorkingFolder){
+        Write-Debug "Working Folder not deleted : $($workingFolder.FullName)"        
     }else{
-        Write-Debug "Working Folder not deleted : $($workingFolder.FullName)"
+        $null = Remove-Item $workingFolder -Recurse -Force -Confirm:$false
     }
 
     return $vroIdeFolder
@@ -487,7 +487,7 @@ function Import-VroIde {
             Mandatory = $true
         )]
         [string]$vroIdeFolder,
-        [bool]$cleanWorkingFolder = $true
+        [switch]$keepWorkingFolder
     )
 
     if (!$vROConnection){
@@ -543,7 +543,9 @@ function Import-VroIde {
         Remove-Item -Path "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -Confirm:$false
     }
 
-    if ($cleanWorkingFolder){
+    if ($keepWorkingFolder){
+        Write-Debug "Working Folder not deleted : $($workingFolder.FullName)"        
+    }else{
         $null = Remove-Item $workingFolder -Recurse -Force -Confirm:$false
     }
 }
