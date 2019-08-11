@@ -16,6 +16,9 @@ $modules = Get-Module -list
 if ($modules.Name -notcontains 'pester') {
     Install-Module -Name Pester -Force -SkipPublisherCheck
 }
+if ($modules.Name -notcontains 'PowervRO') {
+    Install-Module -Name PowervRO -Force -SkipPublisherCheck
+}
 Invoke-Pester -Script ( Get-Location | Join-Path -ChildPath "tests" ) -OutputFile ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" ) -OutputFormat 'NUnitXML'
 
 # Get-Content ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" )

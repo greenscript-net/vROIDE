@@ -7,13 +7,13 @@ InModuleScope -ModuleName vroide -ScriptBlock {
             ## Code in here
             $vROConnection = "mocked endpoint"
             $TempDir = [System.Guid]::NewGuid().ToString()
-            $vroIdeFolder = New-Item -Type Directory -Name $TempDir -path $env:TMPDIR
+            $vroIdeFolder = New-Item -Path (New-TemporaryFile).DirectoryName -Type Directory -Name $TempDir
             $vroActionHeaders = Get-Content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json
             foreach ($vroActionHeader in $vroActionHeaders){
                 $vroActionHeader = $vroActionHeader -as [VroAction]
                 $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
             }
-        ##code $vroIdeFolder
+        ## code $vroIdeFolder
         }
 
         BeforeEach {
@@ -68,11 +68,11 @@ InModuleScope -ModuleName vroide -ScriptBlock {
         }
 
         It "Exports VRO Environment" {
-            Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder.FullName
+            Export-VroIde -Debug -keepWorkingFolder:$true -vroIdeFolder $vroIdeFolder.FullName
             2 | should be 2
         }
         it "Imports VRO Environment" {
-            Import-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder.FullName
+            Import-VroIde -Debug -keepWorkingFolder:$true -vroIdeFolder $vroIdeFolder.FullName
             3 | should be 3
         }
     }
