@@ -13,7 +13,7 @@ InModuleScope -ModuleName vroide -ScriptBlock {
                 $vroActionHeader = $vroActionHeader -as [VroAction]
                 $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
             }
-            code $vroIdeFolder
+        ##code $vroIdeFolder
         }
 
         BeforeEach {
