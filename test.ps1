@@ -18,4 +18,4 @@ if ($modules.Name -notcontains 'pester') {
 }
 Invoke-Pester -Script ( Get-Location | Join-Path -ChildPath "tests" ) -OutputFile ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" ) -OutputFormat 'NUnitXML'
 
-Get-Content ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" )
+# Get-Content ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" )

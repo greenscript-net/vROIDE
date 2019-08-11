@@ -115,6 +115,12 @@ function ConvertTo-VroActionJs {
             $vroActionJs += "* @param {" + $input.type + "} " + $input.name + " - " + $input.description + [System.Environment]::NewLine
         }
     }
+
+    # additional fields
+
+    $vroActionJs += "* @id " + $InputObject.Id + [System.Environment]::NewLine
+    $vroActionJs += "* @version " + $InputObject.Version + [System.Environment]::NewLine
+    $vroActionJs += "* @allowedoperations " + $InputObject.AllowedOperations + [System.Environment]::NewLine
  
     # compulsory return field
 
@@ -156,7 +162,7 @@ function ConvertFrom-VroActionJs {
     # Regex Extractor
 
     $patternHeader = '(?smi)\/\*\*\n(\* .*\n)+(\*\/)'
-    $patternDescription = "(\/\*\*\n)(\* [^@]*\n)*"
+    $patternDescription = "(\/\*\*\n)(\* [^@\n]*[^@]*)(\n)"
     $patternBody = "(?smi)^function .*\n(.*\n)*"
     $patternInputs =  "\* @(?<jsdoctype>param) (?<type>[^}]*}) (?<name>\w+) - (?<description>[^\n]*)"
     $patternReturn =  "\* @(?<jsdoctype>return) (?<type>{[^}]*})"
@@ -164,10 +170,10 @@ function ConvertFrom-VroActionJs {
 
     $jsdocBody = ($InputObject | Select-String -Pattern $patternBody | ForEach-Object { $_.Matches.value }).split([System.Environment]::NewLine)
     $vroAction.Name = $jsdocBody[0].split(" ")[1].split("(")[0]
-    $vroAction.Script = ($jsdocBody | Select-Object -Skip 1 | ForEach-Object { $_ -replace "^\t","" }) -join [System.Environment]::NewLine
+    $vroAction.Script = ($jsdocBody | Select-Object -Skip 1 | Select-Object -First ($jsdocBody.count - 3) | ForEach-Object { $_ -replace "^\t","" }) -join [System.Environment]::NewLine
     $jsdocHeader = $InputObject | Select-String $patternHeader -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1] } | ForEach-Object { $_.Value }
     $jsDocDescription = $InputObject | Select-String -Pattern $patternDescription -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[2] } | ForEach-Object { $_.Value }
-    $vroAction.Description = ($jsDocDescription.split([System.Environment]::NewLine) | ForEach-Object { $_ -replace "^\* ","" }) -join [System.Environment]::NewLine
+    $vroAction.Description = $jsDocDescription -replace "(?ms)^\* ",""
 
     # jsdoc comments
 
@@ -187,12 +193,14 @@ function ConvertFrom-VroActionJs {
     $id = $jsdocComments | Where-Object { $_.jsdoctype -eq "id" }
     
     if ($id){
-        $vroAction.Id = $id
+        $vroAction.Id = $id.description
     }else{
         $vroAction.Id = "{$([guid]::NewGuid().Guid)}".ToUpper()
     }
 
     # inputs
+
+    $inputs = @()
 
     foreach ($input in ($jsdocComments | Where-Object { $_.jsdoctype -eq "param" })) {
         $obj = [VroActionInput]::new()
@@ -203,19 +211,14 @@ function ConvertFrom-VroActionJs {
     }
     $vroAction.InputParameters = $inputs
 
+    # version
+    $vroAction.Version = ($jsdocComments | Where-Object { $_.jsdoctype -eq "version" }).description
+
+    # allowed operations
+    $vroAction.AllowedOperations = ($jsdocComments | Where-Object { $_.jsdoctype -eq "allowedoperations" }).description
+
     # return type
-    $vroAction.OutputType = ($jsdocComments | Where-Object { $_.jsdoctype -eq "param" }).replace("}", "").replace("{", "")
-
-    # other jsdoc comments
-
-    foreach ($jsdocComment in ($jsdocComments | Where-Object { $_.jsdoctype -notin "param","id","return" })) {
-        $obj = [VroActionInput]::new()
-        $obj.name = $input.name
-        $obj.description = $input.description                  
-        $obj.type = $input.type
-        $inputs += $obj
-    }
-    $vroAction.InputParameters = $inputs
+    $vroAction.OutputType = ($jsdocComments | Where-Object { $_.jsdoctype -eq "return" }).type
 
     return $vroAction
 }
@@ -229,11 +232,37 @@ function ConvertTo-VroActionXml {
     # move as many tests as possible up to the top
     # consider output type - currently this script will be null, but maybe it should be the jsdoc path
 
-    $vroActionXml = [xml]'<?xml version="1.0" encoding="UTF-8"?>
-    <dunes-script-module name="NewModuleName" result-type="string" api-version="6.0.0" id="NewGuid" version="0.0.0"/>'
-    $vroActionXml.'dunes-script-module'.id = $inputObject.Id
-    $vroActionXml.'dunes-script-module'.name = $inputObject.Name
-    $vroActionXml.'dunes-script-module'.'result-type' = $inputObject.OutputType
+    $vroActionXml = [xml]'<?xml version="1.0" encoding="UTF-8"?>'
+
+    $xmlElt = $vroActionXml.CreateElement("dunes-script-module")
+
+    $att = $vroActionXml.CreateAttribute("name")
+    $att.Value = $inputObject.Name
+    $null = $xmlElt.Attributes.Append($att)
+
+    $att = $vroActionXml.CreateAttribute("result-type")
+    $att.Value = $inputObject.OutputType.replace("{","").replace("}","")
+    $null = $xmlElt.Attributes.Append($att)
+
+    $att = $vroActionXml.CreateAttribute("api-version")
+    $att.Value = "6.0.0"
+    $null = $xmlElt.Attributes.Append($att)
+
+    $att = $vroActionXml.CreateAttribute("id")
+    $att.Value = $inputObject.Id
+    $null = $xmlElt.Attributes.Append($att)
+
+    $att = $vroActionXml.CreateAttribute("version")
+    $att.Value = $inputObject.Version
+    $null = $xmlElt.Attributes.Append($att)
+
+    if (!([string]::IsNullOrWhitespace($inputObject.AllowedOperations))){
+        $att = $vroActionXml.CreateAttribute("allowed-operations")
+        $att.Value = $inputObject.AllowedOperations
+        $null = $xmlElt.Attributes.Append($att)
+    }
+
+    $null = $vroActionXml.AppendChild($xmlElt)
 
     $Node = $vroActionXml.'dunes-script-module'
 
@@ -262,7 +291,7 @@ function ConvertTo-VroActionXml {
 
         # Creation of an attribute in the principal node
         $xmlAtt = $vroActionXml.CreateAttribute("t")
-        $xmlAtt.value = $Input.type.trim("[").trim("]")
+        $xmlAtt.value = $Input.type.trim("{").trim("}")
         $null = $xmlElt.Attributes.Append($xmlAtt)
 
         # Add the node to the document
@@ -272,7 +301,7 @@ function ConvertTo-VroActionXml {
     if ($inputObject.Script){
         # Creation of a node and its text
         $xmlElt = $vroActionXml.CreateElement("script")
-        $xmlCdata = $vroActionXml.CreateCDataSection($inputObject.Script)
+        $xmlCdata = $vroActionXml.CreateCDataSection($inputObject.Script -join [System.Environment]::NewLine)
         $null = $xmlElt.AppendChild($xmlCdata)
 
         # Creation of an attribute in the principal node
@@ -369,9 +398,9 @@ function Compare-VroActionContents {
     
     # finalise
     
-    #Write-Debug $tmpWorkingFolder.fullName
-    #Write-Debug $originalFileHash.Hash
-    #Write-Debug $updatedFileHash.Hash
+    Write-Debug $tmpWorkingFolder.fullName
+    Write-Debug $originalFileHash.Hash
+    Write-Debug $updatedFileHash.Hash
 
     if ($originalFileHash.Hash -eq $updatedFileHash.Hash){
         $tmpWorkingFolder | Remove-Item -Recurse -Force -Confirm:$false
@@ -416,6 +445,8 @@ function Export-VroIde {
         [string]$vroIdeFolder,
         [switch]$keepWorkingFolder
     )
+
+    Write-Debug "### Beginng Export VRO IDE"
 
     if (!$vROConnection){
         throw "VRO Connection Required"
@@ -496,6 +527,8 @@ function Import-VroIde {
         [switch]$keepWorkingFolder
     )
 
+    Write-Debug "### Beginng Import VRO IDE"
+
     if (!$vROConnection){
         throw "VRO Connection Required"
     }
@@ -503,7 +536,7 @@ function Import-VroIde {
     if (!(Test-Path "$vroIdeFolder/vroActionHeaders.json")){
         throw "vroActionHeaders.json file required in the working folder"
     }else{
-        $vroActionHeaders = Get-Content "$vroIdeFolder/vroActionHeaders.json" -Raw | ConvertFrom-Json
+        $vroActionHeaders = Get-Content (Join-Path -Path $vroIdeFolder -ChildPath "vroActionHeaders.json") -Raw | ConvertFrom-Json
     }
 
     $vroActionHeaders | Select-Object -First 5
@@ -513,40 +546,48 @@ function Import-VroIde {
     # Creating Folders
 
     foreach ($vroActionHeader in $vroActionHeaders){
-        Write-Debug "Creating Action Folder: $($vroActionHeader.FQN)"
-        if (!(test-path "$workingFolder/$($vroActionHeader.FQN)/")){$null = New-Item -ItemType Directory -Path "$workingFolder/$($vroActionHeader.FQN)/" -Force}
-        if (!(test-path "$vroIdeFolder/$($vroActionHeader.FQN)/")){$null = New-Item -ItemType Directory -Path "$vroIdeFolder/$($vroActionHeader.FQN)/" -Force}
+        $vroActionHeader = $vroActionHeader -as [VroAction]
+        Write-Debug "Creating Folders : $($vroActionHeader.FQN)"
+        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolder))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
+        }
+        if (!(Test-Path $vroActionHeader.modulePath($workingFolder))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($workingFolder)
+        }
     }
 
     # Downloading Actions
 
     foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Downloading Action : $($vroActionHeader.FQN)"
-        $null = Export-vROAction -Id $vroActionHeader.Id -Path "$workingFolder/$($vroActionHeader.FQN)/"
+        $null = Export-vROAction -Id $vroActionHeader.Id -Path $vroActionHeader.modulePath($workingFolder)
     }
 
     # Import jsodc convert to xml convert save and export to action
     foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
-        Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.Id)"
-        $vroActionJs = Get-Content "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).js"
+        $vroActionJs = Get-Content $vroActionHeader.filePath($vroIdeFolder,"js") -Raw
         $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs
+        $vroAction | ConvertTo-Json -Depth 99 | Set-Content $vroActionHeader.filePath($workingFolder,"json")
         $vroActionXml = ConvertTo-VroActionXml -InputObject $vroAction
-        $vroActionXml.Save("$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).xml")
-        Export-VroActionFile -InputObject $vroActionXml -exportFolder "$vroIdeFolder/$($vroActionHeader.FQN)/"
+        $vroActionXml.Save($vroActionHeader.filePath($workingFolder,"xml"))
+        Export-VroActionFile -InputObject $vroActionXml -exportFolder $vroActionHeader.modulePath($vroIdeFolder)
     }
 
     # Compare and upload on difference
 
     foreach ($vroActionHeader in $vroActionHeaders){
-        $compareResult = Compare-VroActionContents -OriginalVroActionFile "$workingFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -UpdatedVroActionFile "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" #-Debug
+        $vroActionHeader = $vroActionHeader -as [VroAction]
+        $compareResult = Compare-VroActionContents -OriginalVroActionFile $vroActionHeader.filePath($workingFolder,"action") -UpdatedVroActionFile $vroActionHeader.filePath($vroIdeFolder,"action") -Debug
         if ($compareResult){
             Write-Debug "Comparing $($vroActionHeader.Name) : would not be updated - file hash identical"
         }else{
             Write-Debug "Comparing $($vroActionHeader.Name) : would be updated - file hash not identical"
-            Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -Overwrite #-WhatIf
+            Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File $vroActionHeader.filePath($vroIdeFolder,"action") #-Overwrite -WhatIf
         }
-        Remove-Item -Path "$vroIdeFolder/$($vroActionHeader.FQN)/$($vroActionHeader.Name).action" -Confirm:$false
+        Remove-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Confirm:$false
     }
 
     if ($keepWorkingFolder){

@@ -14,10 +14,10 @@ if (!$vROConnection){
     }
 }
 
-$vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder #-vroIdeFolder /Users/garryhughes/GIT/my-actions/src/
+$vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder /Users/garryhughes/GIT/my-actions/src/
 
 code $vroIdeFolder
 
 # Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
 
-Remove-Item $vroIdeFolder -Recurse -Force -Confirm:$false
+# Remove-Item $vroIdeFolder -Recurse -Force -Confirm:$false

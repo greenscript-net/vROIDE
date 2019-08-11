@@ -8,19 +8,27 @@ InModuleScope -ModuleName vroide -ScriptBlock {
             $vROConnection = "mocked endpoint"
             $TempDir = [System.Guid]::NewGuid().ToString()
             $vroIdeFolder = New-Item -Type Directory -Name $TempDir -path $env:TMPDIR
-            $vroActionHeaders = get-content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json
+            $vroActionHeaders = Get-Content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json
             foreach ($vroActionHeader in $vroActionHeaders){
                 $vroActionHeader = $vroActionHeader -as [VroAction]
                 $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
             }
             code $vroIdeFolder
         }
+
         BeforeEach {
             foreach ($vroActionHeader in $vroActionHeaders){
                 $vroActionHeader = $vroActionHeader -as [VroAction]
                 $null = Copy-Item -Path (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath "$($vroActionHeader.Name).action") -Destination $vroActionHeader.modulePath($vroIdeFolder)
             }
         }
+
+        AfterEach {
+            if (Test-Path $vroActionHeader.filePath($vroIdeFolder,"action")){
+                Remove-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Confirm:$false
+            }
+        }
+
         Mock Get-vROAction { return (get-content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json)}
         Mock Export-vROAction {
             param (
@@ -50,7 +58,7 @@ InModuleScope -ModuleName vroide -ScriptBlock {
                 [Parameter(
                     Mandatory = $false
                 )]
-                [string]$File,
+                [string[]]$File,
                 [Parameter(
                     Mandatory = $false
                 )]
@@ -60,9 +68,13 @@ InModuleScope -ModuleName vroide -ScriptBlock {
         }
 
         It "Exports VRO Environment" {
-            Export-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug -keepWorkingFolde:$true
-            #Import-VroIde -vroIdeFolder $vroIdeFolder.FullName -Debug
+            Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder.FullName
             2 | should be 2
+        }
+        it "Imports VRO Environment" {
+            Import-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder.FullName
+            3 | should be 3
         }
     }
 }
+#
