@@ -172,8 +172,10 @@ function ConvertFrom-VroActionJs {
     # jsdoc comments
 
     $jsdocComments = @()
-    $jsdocHeader.Split([System.Environment]::NewLine) | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
-        Foreach-Object {
+    #$jsdocHeader.Split([System.Environment]::NewLine) | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
+    $jsdocHeader.Split("`n") | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
+    #$jsdocHeader | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
+    Foreach-Object {
             $jsdocComments += [PSCustomObject] @{
                 jsdoctype = $_.Matches[0].Groups['jsdoctype'].Value
                 type = $_.Matches[0].Groups['type'].Value
