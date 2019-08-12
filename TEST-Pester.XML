@@ -1,50 +1,50 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="13" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2019-08-12" time="09:55:26">
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="13" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2019-08-12" time="10:34:48">
   <environment os-version="18.7.0" machine-name="GazMac" cwd="/Users/garryhughes/GIT/vROIDE" nunit-version="2.5.8.0" platform="Darwin" clr-version="Unknown" user="garryhughes" user-domain="" />
   <culture-info current-culture="en-GB" current-uiculture="en-GB" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="1.1945" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="0.5734" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/Users/garryhughes/GIT/vROIDE/tests/Calculator/Add-Numbers.Tests.ps1" executed="True" result="Success" success="True" time="0.101" asserts="0" description="/Users/garryhughes/GIT/vROIDE/tests/Calculator/Add-Numbers.Tests.ps1">
+      <test-suite type="TestFixture" name="/Users/garryhughes/GIT/vROIDE/tests/Calculator/Add-Numbers.Tests.ps1" executed="True" result="Success" success="True" time="0.0947" asserts="0" description="/Users/garryhughes/GIT/vROIDE/tests/Calculator/Add-Numbers.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Add-Numbers" executed="True" result="Success" success="True" time="0.0878" asserts="0" description="Add-Numbers">
+          <test-suite type="TestFixture" name="Add-Numbers" executed="True" result="Success" success="True" time="0.0842" asserts="0" description="Add-Numbers">
             <results>
-              <test-case description="adds positive numbers" name="Add-Numbers.adds positive numbers" time="0.0047" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="adds negative numbers" name="Add-Numbers.adds negative numbers" time="0.0043" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="adds one negative number to positive number" name="Add-Numbers.adds one negative number to positive number" time="0.0049" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="concatenates strings if given strings" name="Add-Numbers.concatenates strings if given strings" time="0.0049" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="should not be 0" name="Add-Numbers.should not be 0" time="0.0103" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="adds positive numbers" name="Add-Numbers.adds positive numbers" time="0.0043" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="adds negative numbers" name="Add-Numbers.adds negative numbers" time="0.0061" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="adds one negative number to positive number" name="Add-Numbers.adds one negative number to positive number" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="concatenates strings if given strings" name="Add-Numbers.concatenates strings if given strings" time="0.0042" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="should not be 0" name="Add-Numbers.should not be 0" time="0.0049" asserts="0" success="True" result="Success" executed="True" />
             </results>
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="TestFixture" name="/Users/garryhughes/GIT/vROIDE/tests/Planets/Get-Planet.Tests.ps1" executed="True" result="Success" success="True" time="0.1613" asserts="0" description="/Users/garryhughes/GIT/vROIDE/tests/Planets/Get-Planet.Tests.ps1">
+      <test-suite type="TestFixture" name="/Users/garryhughes/GIT/vROIDE/tests/Planets/Get-Planet.Tests.ps1" executed="True" result="Success" success="True" time="0.1427" asserts="0" description="/Users/garryhughes/GIT/vROIDE/tests/Planets/Get-Planet.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Get-Planet" executed="True" result="Success" success="True" time="0.1484" asserts="0" description="Get-Planet">
+          <test-suite type="TestFixture" name="Get-Planet" executed="True" result="Success" success="True" time="0.1302" asserts="0" description="Get-Planet">
             <results>
-              <test-suite type="TestFixture" name="Filtering by Name" executed="True" result="Success" success="True" time="0.1006" asserts="0" description="Filtering by Name">
+              <test-suite type="TestFixture" name="Filtering by Name" executed="True" result="Success" success="True" time="0.0952" asserts="0" description="Filtering by Name">
                 <results>
-                  <test-case description="Given invalid parameter -Name 'Alpha Centauri', it returns $null" name="Get-Planet.Filtering by Name.Given invalid parameter -Name 'Alpha Centauri', it returns $null" time="0.0062" asserts="0" success="True" result="Success" executed="True" />
-                  <test-suite type="ParameterizedTest" name="Get-Planet.Filtering by Name.Given valid -Name '&lt;Filter&gt;', it returns '&lt;Expected&gt;'" executed="True" result="Success" success="True" time="0.0269" asserts="0" description="Given valid -Name '&lt;Filter&gt;', it returns '&lt;Expected&gt;'">
+                  <test-case description="Given invalid parameter -Name 'Alpha Centauri', it returns $null" name="Get-Planet.Filtering by Name.Given invalid parameter -Name 'Alpha Centauri', it returns $null" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-suite type="ParameterizedTest" name="Get-Planet.Filtering by Name.Given valid -Name '&lt;Filter&gt;', it returns '&lt;Expected&gt;'" executed="True" result="Success" success="True" time="0.0309" asserts="0" description="Given valid -Name '&lt;Filter&gt;', it returns '&lt;Expected&gt;'">
                     <results>
-                      <test-case description="Given valid -Name 'Earth', it returns 'Earth'" name="Get-Planet.Filtering by Name.Given valid -Name 'Earth', it returns 'Earth'" time="0.0067" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Given valid -Name 'Earth', it returns 'Earth'" name="Get-Planet.Filtering by Name.Given valid -Name 'Earth', it returns 'Earth'" time="0.0076" asserts="0" success="True" result="Success" executed="True" />
                       <test-case description="Given valid -Name 'ne*', it returns 'Neptune'" name="Get-Planet.Filtering by Name.Given valid -Name 'ne*', it returns 'Neptune'" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
-                      <test-case description="Given valid -Name 'ur*', it returns 'Uranus'" name="Get-Planet.Filtering by Name.Given valid -Name 'ur*', it returns 'Uranus'" time="0.0066" asserts="0" success="True" result="Success" executed="True" />
-                      <test-case description="Given valid -Name 'm*', it returns '@('Mercury', 'Mars')'" name="Get-Planet.Filtering by Name.Given valid -Name 'm*', it returns '@('Mercury', 'Mars')'" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Given valid -Name 'ur*', it returns 'Uranus'" name="Get-Planet.Filtering by Name.Given valid -Name 'ur*', it returns 'Uranus'" time="0.0093" asserts="0" success="True" result="Success" executed="True" />
+                      <test-case description="Given valid -Name 'm*', it returns '@('Mercury', 'Mars')'" name="Get-Planet.Filtering by Name.Given valid -Name 'm*', it returns '@('Mercury', 'Mars')'" time="0.0073" asserts="0" success="True" result="Success" executed="True" />
                     </results>
                   </test-suite>
                 </results>
               </test-suite>
-              <test-case description="Given no parameters, it lists all 8 planets" name="Get-Planet.Given no parameters, it lists all 8 planets" time="0.0144" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Given no parameters, it lists all 8 planets" name="Get-Planet.Given no parameters, it lists all 8 planets" time="0.0087" asserts="0" success="True" result="Success" executed="True" />
             </results>
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="TestFixture" name="/Users/garryhughes/GIT/vROIDE/tests/SingleImportExport.Tests.ps1" executed="True" result="Success" success="True" time="0.9322" asserts="0" description="/Users/garryhughes/GIT/vROIDE/tests/SingleImportExport.Tests.ps1">
+      <test-suite type="TestFixture" name="/Users/garryhughes/GIT/vROIDE/tests/SingleImportExport.Tests.ps1" executed="True" result="Success" success="True" time="0.336" asserts="0" description="/Users/garryhughes/GIT/vROIDE/tests/SingleImportExport.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Export VRO IDE" executed="True" result="Success" success="True" time="0.893" asserts="0" description="Export VRO IDE">
+          <test-suite type="TestFixture" name="Export VRO IDE" executed="True" result="Success" success="True" time="0.2949" asserts="0" description="Export VRO IDE">
             <results>
-              <test-case description="Exports VRO Environment" name="Export VRO IDE.Exports VRO Environment" time="0.1631" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="Imports VRO Environment" name="Export VRO IDE.Imports VRO Environment" time="0.432" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Exports VRO Environment" name="Export VRO IDE.Exports VRO Environment" time="0.0997" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Imports VRO Environment" name="Export VRO IDE.Imports VRO Environment" time="0.1081" asserts="0" success="True" result="Success" executed="True" />
             </results>
           </test-suite>
         </results>

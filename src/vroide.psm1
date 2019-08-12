@@ -31,12 +31,6 @@ function NewGuid {
     return "{$([guid]::NewGuid().Guid)}".ToUpper()
 }
 
-function CreateTemporaryFolder {
-    $TempDir = [System.Guid]::NewGuid().ToString()
-    $TempDirObj = New-Item -Type Directory -Name $TempDir -path $env:TMPDIR
-    return $TempDirObj    
-}
-
 function ConvertFrom-VroActionXml {
     param (
         [Parameter(
@@ -331,7 +325,8 @@ function Export-VroActionFile {
     )
 
     # create temporary folder
-    $tmpWorkingFolder = CreateTemporaryFolder
+    $TempDir = [System.Guid]::NewGuid().ToString()
+    $tmpWorkingFolder = New-Item -Path (New-TemporaryFile).DirectoryName -Type Directory -Name $TempDir
     $compressFolder = New-Item -Path $tmpWorkingFolder.fullName -Name "$($vroActionXml.'dunes-script-module'.name).action" -Type Directory
 
     #code $tmpWorkingFolder
@@ -381,7 +376,8 @@ function Compare-VroActionContents {
     )
 
     # create temporary folder
-    $tmpWorkingFolder = CreateTemporaryFolder
+    $TempDir = [System.Guid]::NewGuid().ToString()
+    $tmpWorkingFolder = New-Item -Path (New-TemporaryFile).DirectoryName -Type Directory -Name $TempDir
     $original = New-Item -Path $tmpWorkingFolder.fullName -Name "original" -Type Directory
     $updated = New-Item -Path $tmpWorkingFolder.fullName -Name "updated" -Type Directory
 
