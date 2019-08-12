@@ -8,7 +8,6 @@ Write-Host "BUILD_SOURCESDIRECTORY contents:"
 Get-ChildItem $Env:BUILD_SOURCESDIRECTORY
 Write-Host "Over and out."
 
-
 "current location: $(Get-Location)"
 "script root: $PSScriptRoot"
 "retrieve available modules"
@@ -20,5 +19,3 @@ if ($modules.Name -notcontains 'PowervRO') {
     Install-Module -Name PowervRO -Force -SkipPublisherCheck
 }
 Invoke-Pester -Script ( Get-Location | Join-Path -ChildPath "tests" ) -OutputFile ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" ) -OutputFormat 'NUnitXML'
-
-# Get-Content ( Get-Location | Join-Path -ChildPath "TEST-Pester.XML" )
