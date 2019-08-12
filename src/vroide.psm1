@@ -27,10 +27,6 @@ Class VroAction {
     }
 }
 
-function NewGuid {
-    return "{$([guid]::NewGuid().Guid)}".ToUpper()
-}
-
 function ConvertFrom-VroActionXml {
     param (
         [Parameter(
