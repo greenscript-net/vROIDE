@@ -173,7 +173,7 @@ function ConvertFrom-VroActionJs {
 
     $jsdocComments = @()
     #$jsdocHeader.Split([System.Environment]::NewLine) | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
-    $jsdocHeader.Split("`n") | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
+    $jsdocHeader.Split("`r") | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
     #$jsdocHeader | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
     Foreach-Object {
             $jsdocComments += [PSCustomObject] @{
