@@ -158,9 +158,11 @@ function ConvertFrom-VroActionJs {
     $patternHeader = '(?smi)\/\*\*\n(\* .*\n)+(\*\/)'
     $patternDescription = "(\/\*\*\n)(\* [^@\n]*[^@]*)(\n)"
     $patternBody = "(?smi)^function .*\n(.*\n)*"
-    $patternInputs =  "\* @(?<jsdoctype>param) (?<type>[^}]*}) (?<name>\w+) - (?<description>[^\n]*)"
-    $patternReturn =  "\* @(?<jsdoctype>return) (?<type>{[^}]*})"
-    $patternOther = "\* @(?<jsdoctype>\w+) (?<description>[^{]*)"
+    $patternInputs =  "(?smi)\* @(?<jsdoctype>param) (?<type>[^}]*}) (?<name>\w+) - (?<description>[^\n]*)"
+    $patternReturn =  "(?smi)\* @(?<jsdoctype>return) (?<type>{[^}]*})"
+    $patternId = "(?smi)\* @(?<jsdoctype>id) (?<description>[^\n]*)"
+    $patternAllowedOperations = "(?smi)\* @(?<jsdoctype>allowedoperations) (?<description>[^\n]*)"
+    $patternVersion = "(?smi)\* @(?<jsdoctype>version) (?<description>[^\n]*)"
 
     $jsdocBody = ($InputObject | Select-String -Pattern $patternBody | ForEach-Object { $_.Matches.value }).split([System.Environment]::NewLine)
     $vroAction.Name = $jsdocBody[0].split(" ")[1].split("(")[0]
@@ -172,15 +174,56 @@ function ConvertFrom-VroActionJs {
     # jsdoc comments
 
     $jsdocComments = @()
-    #$jsdocHeader.Split([System.Environment]::NewLine) | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
-    $jsdocHeader.Split("`r") | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
-    #$jsdocHeader | Select-String -Pattern $patternInputs, $patternReturn , $patternOther |
+
+    $jsdocHeader | Select-String -AllMatches -Pattern $patternInputs  |
     Foreach-Object {
-            $jsdocComments += [PSCustomObject] @{
-                jsdoctype = $_.Matches[0].Groups['jsdoctype'].Value
-                type = $_.Matches[0].Groups['type'].Value
-                name = $_.Matches[0].Groups['name'].Value
-                description = $_.Matches[0].Groups['description'].Value
+            foreach ($MatchItem in $_.Matches){
+                $jsdocComments += [PSCustomObject] @{
+                    jsdoctype = $MatchItem.Groups['jsdoctype'].Value
+                    type = $MatchItem.Groups['type'].Value
+                    name = $MatchItem.Groups['name'].Value
+                    description = $MatchItem.Groups['description'].Value
+                }
+            }
+        }
+
+    $jsdocHeader | Select-String -AllMatches -Pattern $patternReturn |
+    Foreach-Object {
+            foreach ($MatchItem in $_.Matches){
+                $jsdocComments += [PSCustomObject] @{
+                    jsdoctype = $MatchItem.Groups['jsdoctype'].Value
+                    type = $MatchItem.Groups['type'].Value
+                }
+            }
+        }
+
+    $jsdocHeader | Select-String -AllMatches -Pattern $patternId |
+    Foreach-Object {
+            foreach ($MatchItem in $_.Matches){
+                $jsdocComments += [PSCustomObject] @{
+                    jsdoctype = $MatchItem.Groups['jsdoctype'].Value
+                    description = $MatchItem.Groups['description'].Value
+                }
+            }
+        }
+
+    $jsdocHeader | Select-String -AllMatches -Pattern $patternAllowedOperations |
+    Foreach-Object {
+            foreach ($MatchItem in $_.Matches){
+                $jsdocComments += [PSCustomObject] @{
+                    jsdoctype = $MatchItem.Groups['jsdoctype'].Value
+                    description = $MatchItem.Groups['description'].Value
+                }
+            }
+        }
+
+    $jsdocHeader | Select-String -AllMatches -Pattern $patternVersion |
+    Foreach-Object {
+            foreach ($MatchItem in $_.Matches){
+                $jsdocComments += [PSCustomObject] @{
+                    jsdoctype = $MatchItem.Groups['jsdoctype'].Value
+                    description = $MatchItem.Groups['description'].Value
+                }
             }
         }
 
