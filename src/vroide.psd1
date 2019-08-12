@@ -30,10 +30,10 @@ CompanyName = 'Greenscript PTY LTD'
 Copyright = '(c) Greenscript. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = ''
+Description = 'PowerShell Module housing a set of functions designed to assist with the creation and update of VMware VRO Actions. There are 2 master functions that import and export Actions for editing locally.'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '6.0'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
