@@ -2,15 +2,21 @@ Import-Module ./src/vroide.psm1 -Force
 
 # Testing Phase
 
-$secpasswd = ConvertTo-SecureString "VMware1!" -AsPlainText -Force
-$defaultCreds = New-Object System.Management.Automation.PSCredential ("administrator@vsphere.local", $secpasswd)
-
 if (!$vROConnection){
-    Write-Host -ForegroundColor Yellow "Trying Default Creds!!!"
-    Connect-vROServer -Server "vra.greenscript.net" -Credential $defaultCreds -IgnoreCertRequirements -Port 443
-    if (!$vROConnection){
-        if (!$cred){$cred = Get-Credential -UserName "administrator@vsphere.local"}
-        Connect-vROServer -Server "vra.greenscript.net" -Credential $cred -IgnoreCertRequirements -Port 443
+    if (!$cred){
+        if (Test-Path ~/defCreds.json){
+            $defCreds = Get-Content -Raw -Path ~/defCreds.json | ConvertFrom-Json
+            $secpasswd = ConvertTo-SecureString $defCreds.password -AsPlainText -Force
+            $cred = New-Object System.Management.Automation.PSCredential ($defCreds.username, $secpasswd)
+            $server = $defCreds.server
+        }else{
+            $cred = Get-Credential -UserName "administrator@vsphere.local"
+        }
+    }
+    if ($server){
+        Connect-vROServer -Server $server -Credential $cred -IgnoreCertRequirements -Port 443
+    }else{
+        Connect-vROServer -Credential $cred -IgnoreCertRequirements -Port 443
     }
 }
 
@@ -18,6 +24,8 @@ $vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder /Us
 
 code $vroIdeFolder
 
-# Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
+Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
 
-# Remove-Item $vroIdeFolder -Recurse -Force -Confirm:$false
+Remove-Item $vroIdeFolder -Recurse -Force -Confirm:$false
+
+Disconnect-vROServer -Confirm:$false
