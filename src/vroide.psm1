@@ -406,6 +406,68 @@ function Export-VroActionFile {
     return $compressedFolder
 }
 
+function ConvertTo-VroActionMd {
+    param (
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [ValidateNotNull()]
+        [VroAction]$InputObject
+    )
+
+    # being compiling MD file
+
+    $vroActionMd = "# " + "VRO Action - " + $InputObject.Name + [System.Environment]::NewLine + [System.Environment]::NewLine
+
+    # add in description if available
+
+    if ($InputObject.Description){
+        $vroActionMd += "## Description" + [System.Environment]::NewLine + [System.Environment]::NewLine
+
+        foreach ($line in $InputObject.Description.split([System.Environment]::NewLine)){
+            $vroActionMd += $line + [System.Environment]::NewLine
+        }
+
+        $vroActionMd += [System.Environment]::NewLine
+    }
+
+    # add inputs if available
+
+    if ($InputObject.InputParameters){
+        $vroActionMd += "## Inputs" + [System.Environment]::NewLine + [System.Environment]::NewLine
+
+        if ($InputObject.InputParameters){
+            foreach ($input in $InputObject.InputParameters) {
+                $vroActionMd += "- [" + $input.type + "]" + $input.name + " : " + $input.description + [System.Environment]::NewLine
+            }
+        }
+        $vroActionMd += [System.Environment]::NewLine
+    }
+
+    # Metadata fields
+
+    $vroActionMd += "## Metadata" + [System.Environment]::NewLine + [System.Environment]::NewLine
+
+    $vroActionMd += "- ID : " + $InputObject.Id + [System.Environment]::NewLine
+    $vroActionMd += "- Version : " + $InputObject.Version + [System.Environment]::NewLine
+    $vroActionMd += "- Allowed Operations : " + $InputObject.AllowedOperations + [System.Environment]::NewLine
+    $vroActionMd += "- Output Type : [" + $InputObject.OutputType + "]" + [System.Environment]::NewLine + [System.Environment]::NewLine
+  
+    # add in function with inputs by name
+
+    $vroActionMd += "## Script " + [System.Environment]::NewLine + [System.Environment]::NewLine
+    if ($InputObject.Script) {
+        $vroActionMd += '```javascript' + [System.Environment]::NewLine
+        foreach ($line in $InputObject.Script.split([System.Environment]::NewLine)) {
+            $vroActionMd += "$line" + [System.Environment]::NewLine
+        }
+        $vroActionMd += '```' + [System.Environment]::NewLine
+    }
+
+    return $vroActionMd
+}
+
 function Compare-VroActionContents {
     param (
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
@@ -544,6 +606,14 @@ function Export-VroIde {
         $vroAction | ConvertTo-Json -Depth 99 | Set-Content $vroActionHeader.filePath($workingFolder,"json")
         $vroActionJs = ConvertTo-VroActionJs -InputObject $vroAction
         $vroActionJs | set-content $vroActionHeader.filePath($vroIdeFolder,"js")
+    }
+
+    foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
+        Write-Debug "Convert from JSON to MD and Save for Action : $($vroActionHeader.FQN)"
+        $vroAction = Get-Content $vroActionHeader.filePath($workingFolder,"json") -Raw | ConvertFrom-Json
+        $vroActionMd = ConvertTo-VroActionMd -InputObject $vroAction
+        $vroActionMd | set-content $vroActionHeader.filePath($vroIdeFolder,"md")
     }
 
     if ($keepWorkingFolder){
