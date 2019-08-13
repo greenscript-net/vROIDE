@@ -10,7 +10,34 @@ There are 2 master functions that import and export Actions for editing locally.
 
 - Downloads and saves all actions to local system in a folder structure aligning with vro modules
 - Extracts the XML content from each of the actions
-- Converts the XML to a Javascript file with JSDOC annotation.
+- Converts the XML to a Javascript file with JSDOC annotation
+- As an addition converts the XML to markdown format in a separate folder
+- Creates the initial stub for some automated testing
+
+there is a "Nested" Option that produces the following structure, ready to turned into a GIT project and tested. It will also auto populate some markdown as documentation.
+
+- docs
+  - module01
+    - action01.md
+    - action02.md
+  - module02
+    - action03.md
+    - action04.md
+- src
+  - module01
+    - action01.js
+    - action02.js
+  - module02
+    - action03.js
+    - action04.js
+- tests
+  - module01
+    - action01.test.js
+    - action02.test.js
+  - module02
+    - action03.test.js
+    - action04.test.js
+ 
 
 ## Import-VroIde
 
@@ -20,3 +47,5 @@ There are 2 master functions that import and export Actions for editing locally.
 - Expands the download actions to XML
 - Does a File Hash compare of the VRO XML and the Javascript JSDOC converted XML
 - If different, will upload the file to VRO.
+
+
