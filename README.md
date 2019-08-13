@@ -14,7 +14,8 @@ There are 2 master functions that import and export Actions for editing locally.
 - As an addition converts the XML to markdown format in a separate folder
 - Creates the initial stub for some automated testing
 
-there is a "Nested" Option that produces the following structure, ready to turned into a GIT project and tested. It will also auto populate some markdown as documentation.
+The following folder structure is produced, ready to turned into a GIT project and tested.
+It will also auto populate some markdown as documentation.
 
 - docs
   - module01
