@@ -558,24 +558,43 @@ function Export-VroIde {
         $vroIdeFolder = CreateTemporaryFolder
     }
 
-    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name "$([guid]::NewGuid().Guid)".ToUpper()
+    $vroIdeFolderSrc = Join-Path $vroIdeFolder -ChildPath "src"
+    $vroIdeFolderDoc = Join-Path $vroIdeFolder -ChildPath "docs"
+    $vroIdeFolderTst = Join-Path $vroIdeFolder -ChildPath "tests"
+    if (!(Test-Path $vroIdeFolderSrc)){
+        $null = New-Item -ItemType Directory -Path $vroIdeFolderSrc
+    }
+    if (!(Test-Path $vroIdeFolderDoc)){
+        $null = New-Item -ItemType Directory -Path $vroIdeFolderDoc
+    }
+    if (!(Test-Path $vroIdeFolderTst)){
+        $null = New-Item -ItemType Directory -Path $vroIdeFolderTst
+    }
+
+    $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolderSrc -Name "$([guid]::NewGuid().Guid)".ToUpper()
 
     $vroActionHeaders = Get-vROAction | Where-Object { $_.FQN -notlike "com.vmware*" }
 
     # export vro action headers 
 
-    $vroActionHeaders | ConvertTo-Json | set-content (Join-Path -Path $vroIdeFolder -ChildPath "vroActionHeaders.json")
+    $vroActionHeaders | ConvertTo-Json | set-content (Join-Path -Path $vroIdeFolderSrc -ChildPath "vroActionHeaders.json")
 
     # Creating Folders
 
     foreach ($vroActionHeader in $vroActionHeaders){
         $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Creating Folders : $($vroActionHeader.FQN)"
-        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolder))){
-            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
-        }
         if (!(Test-Path $vroActionHeader.modulePath($workingFolder))){
             $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($workingFolder)
+        }
+        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolderSrc))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolderSrc)
+        }
+        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolderDoc))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolderDoc)
+        }
+        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolderTst))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolderTst)
         }
     }
 
@@ -605,7 +624,7 @@ function Export-VroIde {
         $vroAction = ConvertFrom-VroActionXml -InputObject $vroActionXml
         $vroAction | ConvertTo-Json -Depth 99 | Set-Content $vroActionHeader.filePath($workingFolder,"json")
         $vroActionJs = ConvertTo-VroActionJs -InputObject $vroAction
-        $vroActionJs | set-content $vroActionHeader.filePath($vroIdeFolder,"js")
+        $vroActionJs | set-content $vroActionHeader.filePath($vroIdeFolderSrc,"js")
     }
 
     foreach ($vroActionHeader in $vroActionHeaders){
@@ -613,7 +632,7 @@ function Export-VroIde {
         Write-Debug "Convert from JSON to MD and Save for Action : $($vroActionHeader.FQN)"
         $vroAction = Get-Content $vroActionHeader.filePath($workingFolder,"json") -Raw | ConvertFrom-Json
         $vroActionMd = ConvertTo-VroActionMd -InputObject $vroAction
-        $vroActionMd | set-content $vroActionHeader.filePath($vroIdeFolder,"md")
+        $vroActionMd | set-content $vroActionHeader.filePath($vroIdeFolderDoc,"md")
     }
 
     if ($keepWorkingFolder){
@@ -640,13 +659,33 @@ function Import-VroIde {
         throw "VRO Connection Required"
     }
 
-    if (!(Test-Path "$vroIdeFolder/vroActionHeaders.json")){
-        throw "vroActionHeaders.json file required in the working folder"
-    }else{
-        $vroActionHeaders = Get-Content (Join-Path -Path $vroIdeFolder -ChildPath "vroActionHeaders.json") -Raw | ConvertFrom-Json
+    $vroIdeFolderSrc = Join-Path $vroIdeFolder -ChildPath "src"
+    if (!(Test-Path $vroIdeFolderSrc)){
+        $null = New-Item -ItemType Directory -Path $vroIdeFolderSrc
     }
 
-    $vroActionHeaders | Select-Object -First 5
+    if (!(Test-Path (Join-Path $vroIdeFolderSrc -ChildPath "vroActionHeaders.json"))){
+        throw "vroActionHeaders.json file required in the working folder"
+    }else{
+        #$vroActionHeaders = Get-Content (Join-Path -Path $vroIdeFolderSrc -ChildPath "vroActionHeaders.json") -Raw | ConvertFrom-Json
+        $vroActionHeaders = @();
+        $modules = Get-ChildItem $vroIdeFolderSrc -Directory
+        foreach ($module in $modules){
+            $actions = Get-ChildItem $module
+            foreach ($action in $actions){
+                Write-Host -ForegroundColor Green $action.name
+                $vroActionHeader = [VroAction]@{
+                    Name = $action.basename
+                    FQN = $module.name + "/" + $action.name
+                    Id = New-Guid
+                }
+                $vroActionJs = Get-Content $vroActionHeader.filePath($vroIdeFolderSrc,"js") -Raw
+                $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs
+                $vroActionHeader.Id = $vroAction.Id
+                $vroActionHeaders += $vroActionHeader
+            } 
+        }
+    }
 
     $workingFolder = New-Item -ItemType Directory -Path $vroIdeFolder -Name ([guid]::NewGuid().Guid).ToUpper()
 
@@ -655,12 +694,24 @@ function Import-VroIde {
     foreach ($vroActionHeader in $vroActionHeaders){
         $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Creating Folders : $($vroActionHeader.FQN)"
-        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolder))){
-            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
+        if (!(Test-Path $vroActionHeader.modulePath($vroIdeFolderSrc))){
+            $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolderSrc)
         }
         if (!(Test-Path $vroActionHeader.modulePath($workingFolder))){
             $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($workingFolder)
         }
+    }
+
+    # Import jsodc convert to xml convert save and export to action
+    foreach ($vroActionHeader in $vroActionHeaders){
+        $vroActionHeader = $vroActionHeader -as [VroAction]
+        Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
+        $vroActionJs = Get-Content $vroActionHeader.filePath($vroIdeFolderSrc,"js") -Raw
+        $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs
+        $vroAction | ConvertTo-Json -Depth 99 | Set-Content $vroActionHeader.filePath($workingFolder,"json")
+        $vroActionXml = ConvertTo-VroActionXml -InputObject $vroAction
+        $vroActionXml.Save($vroActionHeader.filePath($workingFolder,"xml"))
+        Export-VroActionFile -InputObject $vroActionXml -exportFolder $vroActionHeader.modulePath($vroIdeFolderSrc)
     }
 
     # Downloading Actions
@@ -669,18 +720,6 @@ function Import-VroIde {
         $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Downloading Action : $($vroActionHeader.FQN)"
         $null = Export-vROAction -Id $vroActionHeader.Id -Path $vroActionHeader.modulePath($workingFolder)
-    }
-
-    # Import jsodc convert to xml convert save and export to action
-    foreach ($vroActionHeader in $vroActionHeaders){
-        $vroActionHeader = $vroActionHeader -as [VroAction]
-        Write-Debug "Convert from XML to JS and Save for Action : $($vroActionHeader.FQN)"
-        $vroActionJs = Get-Content $vroActionHeader.filePath($vroIdeFolder,"js") -Raw
-        $vroAction = ConvertFrom-VroActionJs -InputObject $vroActionJs
-        $vroAction | ConvertTo-Json -Depth 99 | Set-Content $vroActionHeader.filePath($workingFolder,"json")
-        $vroActionXml = ConvertTo-VroActionXml -InputObject $vroAction
-        $vroActionXml.Save($vroActionHeader.filePath($workingFolder,"xml"))
-        Export-VroActionFile -InputObject $vroActionXml -exportFolder $vroActionHeader.modulePath($vroIdeFolder)
     }
 
     # Compare and upload on difference
@@ -692,9 +731,9 @@ function Import-VroIde {
             Write-Debug "Comparing $($vroActionHeader.Name) : would not be updated - file hash identical"
         }else{
             Write-Debug "Comparing $($vroActionHeader.Name) : would be updated - file hash not identical"
-            Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File $vroActionHeader.filePath($vroIdeFolder,"action") #-Overwrite -WhatIf
+            Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File $vroActionHeader.filePath($vroIdeFolderSrc,"action") #-Overwrite -WhatIf
         }
-        Remove-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Confirm:$false
+        Remove-Item -Path $vroActionHeader.filePath($vroIdeFolderSrc,"action") -Confirm:$false
     }
 
     if ($keepWorkingFolder){

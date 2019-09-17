@@ -8,10 +8,14 @@ InModuleScope -ModuleName vroide -ScriptBlock {
             $vROConnection = "mocked endpoint"
             $TempDir = [System.Guid]::NewGuid().ToString()
             $vroIdeFolder = New-Item -Path (New-TemporaryFile).DirectoryName -Type Directory -Name $TempDir
+            $vroIdeFolderSrc = Join-Path $vroIdeFolder -ChildPath "src"
+            if (!(Test-Path $vroIdeFolderSrc)){
+                $null = New-Item -ItemType Directory -Path $vroIdeFolderSrc
+            }
             $vroActionHeaders = Get-Content -Raw (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath  "vroActionHeaders.json") | ConvertFrom-Json
             foreach ($vroActionHeader in $vroActionHeaders){
                 $vroActionHeader = $vroActionHeader -as [VroAction]
-                $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolder)
+                $null = New-Item -ItemType Directory -Path $vroActionHeader.modulePath($vroIdeFolderSrc)
             }
         ## code $vroIdeFolder
         }
@@ -19,13 +23,16 @@ InModuleScope -ModuleName vroide -ScriptBlock {
         BeforeEach {
             foreach ($vroActionHeader in $vroActionHeaders){
                 $vroActionHeader = $vroActionHeader -as [VroAction]
-                $null = Copy-Item -Path (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath "$($vroActionHeader.Name).action") -Destination $vroActionHeader.modulePath($vroIdeFolder)
+                $null = Copy-Item -Path (Get-Location | Join-Path -ChildPath "tests" -AdditionalChildPath "data" | Join-Path -ChildPath "$($vroActionHeader.Name).action") -Destination $vroActionHeader.modulePath($vroIdeFolderSrc)
             }
         }
 
         AfterEach {
-            if (Test-Path $vroActionHeader.filePath($vroIdeFolder,"action")){
-                Remove-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Confirm:$false
+            foreach ($vroActionHeader in $vroActionHeaders){
+                $vroActionHeader = $vroActionHeader -as [VroAction]
+                if (Test-Path $vroActionHeader.filePath($vroIdeFolderSrc,"action")){
+                    Remove-Item -Path $vroActionHeader.filePath($vroIdeFolderSrc,"action") -Confirm:$false
+                }
             }
         }
 
@@ -43,7 +50,7 @@ InModuleScope -ModuleName vroide -ScriptBlock {
                 [string]$path        
             )
             $vroActionHeader = ($vroActionHeaders | Where-Object { $_.id -eq $Id }) -as [VroAction]
-            Move-Item -Path $vroActionHeader.filePath($vroIdeFolder,"action") -Destination $path
+            Move-Item -Path $vroActionHeader.filePath($vroIdeFolderSrc,"action") -Destination $path
             $vroActionFile = Get-Item $path
             
             return $vroActionFile

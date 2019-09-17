@@ -14,13 +14,13 @@ if (!$vROConnection){
         }
     }
     if ($server){
-        Connect-vROServer -Server $server -Credential $cred -IgnoreCertRequirements -Port 443
+        Connect-vROServer -Server $server -Credential $cred -IgnoreCertRequirements -Port $defCreds.port
     }else{
         Connect-vROServer -Credential $cred -IgnoreCertRequirements -Port 443
     }
 }
 
-$vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder /Users/garryhughes/GIT/my-actions/src/
+$vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder /Users/garryhughes/GIT/my-actions/
 
 code $vroIdeFolder
 

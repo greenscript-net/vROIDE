@@ -6,3 +6,4 @@ Copy-Item ./src/vroide.psm1 $tmpWorkingFolder
 Import-Module $tmpWorkingFolder -Force
 
 # Remove-Item $tmpWorkingFolder -Confirm:$false -Force
+
