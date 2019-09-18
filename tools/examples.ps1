@@ -29,6 +29,8 @@ if ($vroIdeFolder){
 code $vroIdeFolder
 
 Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
+Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder
+code $vroIdeFolder
 
 Remove-Item $vroIdeFolder -Recurse -Force -Confirm:$false
 
