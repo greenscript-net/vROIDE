@@ -555,7 +555,9 @@ function Export-VroIde {
         $vroIdeFolder = Get-Item $vroIdeFolder
     }else{
         Write-Debug "No Folder Provided Generating a Random one"
-        $vroIdeFolder = CreateTemporaryFolder
+        $parent = [System.IO.Path]::GetTempPath()
+        [string] $name = [System.Guid]::NewGuid()
+        $vroIdeFolder = New-Item -ItemType Directory -Path (Join-Path $parent $name)
     }
 
     $vroIdeFolderSrc = Join-Path $vroIdeFolder -ChildPath "src"
@@ -719,14 +721,18 @@ function Import-VroIde {
     foreach ($vroActionHeader in $vroActionHeaders){
         $vroActionHeader = $vroActionHeader -as [VroAction]
         Write-Debug "Downloading Action : $($vroActionHeader.FQN)"
-        $null = Export-vROAction -Id $vroActionHeader.Id -Path $vroActionHeader.modulePath($workingFolder)
+        if (Get-vROAction -Id $vroActionHeader.Id -ErrorAction SilentlyContinue){
+            $null = Export-vROAction -Id $vroActionHeader.Id -Path $vroActionHeader.modulePath($workingFolder)
+        }
     }
 
     # Compare and upload on difference
 
     foreach ($vroActionHeader in $vroActionHeaders){
         $vroActionHeader = $vroActionHeader -as [VroAction]
-        $compareResult = Compare-VroActionContents -OriginalVroActionFile $vroActionHeader.filePath($workingFolder,"action") -UpdatedVroActionFile $vroActionHeader.filePath($vroIdeFolder,"action") -Debug
+        if (Test-Path $vroActionHeader.filePath($workingFolder,"action")){
+            $compareResult = Compare-VroActionContents -OriginalVroActionFile $vroActionHeader.filePath($workingFolder,"action") -UpdatedVroActionFile $vroActionHeader.filePath($vroIdeFolderSrc,"action") -Debug
+        }
         if ($compareResult){
             Write-Debug "Comparing $($vroActionHeader.Name) : would not be updated - file hash identical"
         }else{
@@ -734,6 +740,7 @@ function Import-VroIde {
             Import-vROAction -CategoryName $vroActionHeader.FQN.split("/")[0] -File $vroActionHeader.filePath($vroIdeFolderSrc,"action") #-Overwrite -WhatIf
         }
         Remove-Item -Path $vroActionHeader.filePath($vroIdeFolderSrc,"action") -Confirm:$false
+        $compareResult = $null
     }
 
     if ($keepWorkingFolder){

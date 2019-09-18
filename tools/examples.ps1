@@ -20,7 +20,11 @@ if (!$vROConnection){
     }
 }
 
-$vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder /Users/garryhughes/GIT/my-actions/
+if ($vroIdeFolder){
+    Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder
+}else{
+    $vroIdeFolder = Export-VroIde -Debug -keepWorkingFolder:$false #-vroIdeFolder /Users/garryhughes/GIT/my-actions/
+}
 
 code $vroIdeFolder
 
