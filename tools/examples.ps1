@@ -28,7 +28,7 @@ if ($vroIdeFolder){
 
 code $vroIdeFolder
 
-Import-VroIde -vroIdeFolder $vroIdeFolder -Debug
+Import-VroIde -vroIdeFolder $vroIdeFolder #-Debug
 Export-VroIde -Debug -keepWorkingFolder:$false -vroIdeFolder $vroIdeFolder
 code $vroIdeFolder
 
