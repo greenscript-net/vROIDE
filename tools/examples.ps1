@@ -14,9 +14,9 @@ if (!$vROConnection){
         }
     }
     if ($server){
-        Connect-vROServer -Server $server -Credential $cred -IgnoreCertRequirements -Port $defCreds.port
+        Connect-vROServer -Server $server -Credential $cred -IgnoreCertRequirements -Port $defCreds.port -SslProtocol Ssl3
     }else{
-        Connect-vROServer -Credential $cred -IgnoreCertRequirements -Port 443
+        Connect-vROServer -Credential $cred -IgnoreCertRequirements -Port 443 -SslProtocol Ssl3
     }
 }
 
